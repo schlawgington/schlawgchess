@@ -1,100 +1,86 @@
 from constants import *
 from move import *
-
-BOARD = [[EMPTY for i in range(BOARD_WIDTH)] for i in range(BOARD_HEIGHT)]
-
-def initboard():
-    for row in range(BOARD_HEIGHT):
-        for col in range(BOARD_WIDTH):
-            if row == 0:
-                BOARD[row][col] = back_rank[col]
-            elif row == 7:
-                BOARD[row][col] = back_rank[col].lower()
-            if row == 1:
-               BOARD[row][col] = ' P '
-            elif row == 6:
-               BOARD[row][col] = ' p '
-
-def printboard():
-    for row in range(BOARD_HEIGHT):
-        for col in range(BOARD_WIDTH):
-            if (row % 2 == 0 and col % 2 == 0) or (row % 2 != 0 and col % 2 != 0):
-                print(f"{WHITE_BACK}{BOARD[row][col]}{ESCAPE_COLOR_HELL}", end = '')
-            elif (row % 2 != 0 and col % 2 == 0) or (row % 2 == 0 and col % 2 != 0):
-                print(f"{BLACK_BACK}{BOARD[row][col]}{ESCAPE_COLOR_HELL}", end = '')
-        print(f' {BOARD_HEIGHT - row}')
-    for char in Files:
-        print(f" {char} ", end = '')
-    print('')
-
-def get_pieces(player):
-    pieces = {"white": {}, "black": {}}
-
-    for row in range(BOARD_HEIGHT):
-        for col in range(BOARD_WIDTH):
-            if BOARD[row][col].isupper():
-                piece_pos_string = f"{Files[col]}{BOARD_HEIGHT - row}"
-                if piece_pos_string not in pieces["black"]:
-                    pieces["black"][piece_pos_string] = BOARD[row][col].strip()
-            elif BOARD[row][col].islower():
-                piece_pos_string = f"{Files[col]}{BOARD_HEIGHT - row}"
-                if piece_pos_string not in pieces["white"]:
-                    pieces["white"][piece_pos_string] = BOARD[row][col].strip()
-    
-    print(pieces[player])
-
-    return pieces
-
-def in_check(opposite_player_moves:list, player_pieces, player):
-    for piece in player_pieces[player].keys():
-        if player_pieces[player][piece].upper() == 'K':
-            king_pos = piece
-    
-    check = False
-
-    for mv in opposite_player_moves:
-        if mv == king_pos:
-            check = True
-
-    player_moves = {}
-
-    if check == True:
-        for piece in player_pieces[player].keys():
-            if piece not in player_moves:
-                player_moves[piece] = legal_check(move(player_pieces, player, piece, BOARD), player, opposite_player_moves)
-
-def get_in(color:str, pieces):
-    user_in = input("Enter rank and file: ").upper()
-    while user_in not in pieces:
-        user_in = input("Enter valid rank and file: ").upper()
-
-    return user_in
-
-def translate(move_in:str):
-    row_num = BOARD_HEIGHT - int(move_in[1])
-    col_num = Filetonum[move_in[0]]
-
-    return row_num, col_num
+from board_eval import *
+from helper import *
 
 def game_loop(player, opposite_player):
-    printboard()
+    capture_flag = False
 
-    cur_pieces = get_pieces(player)
+    printboard(BOARD)
+
+    player_pieces = get_pieces(BOARD)
+
+    cur_eval = score(BOARD, player_pieces, player)
+    print(cur_eval)
 
     opposite_player_moves = []
-    for piece in cur_pieces[opposite_player].keys():
-        opposite_player_moves.extend(move(cur_pieces, opposite_player, piece, BOARD))
+    for piece in player_pieces[opposite_player].keys():
+        opposite_player_moves.extend(move(player_pieces, opposite_player, piece, BOARD))
 
-    in_check(opposite_player_moves, cur_pieces, player)
+    if in_check(opposite_player_moves, player_pieces, player):
+        print(f"{player} in check")
+        legal_moves = moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD)
+        all_legal_moves = legal_moves
 
-    user_in = get_in(player, cur_pieces[player])
-    translated_in = translate(user_in)
+        if legal_moves == "CHECKMATE":
+            return "CHECKMATE", None, None, None, None, None
 
-    legal_moves = legal_check(move(cur_pieces, player, user_in, BOARD), player, opposite_player_moves)
+        legal_move_pieces = {}
+        for piece in legal_moves.keys():
+            if piece not in legal_move_pieces:
+                row, col = translate(piece)
+                legal_move_pieces[piece] = BOARD[row][col].strip()
 
-    untrans_move = get_in(player, legal_moves)
+        print(legal_move_pieces)
+
+        untranslated_piece_to_move = get_in(legal_moves.keys())
+        if untranslated_piece_to_move.upper() == "BACK":
+            return 1, None, None, None, None, None
+        
+        translated_piece_to_move = translate(untranslated_piece_to_move)
+
+        print(legal_moves[untranslated_piece_to_move])
+
+        untranslated_piece_move = get_in(legal_moves[untranslated_piece_to_move])
+        if untranslated_piece_move.upper() == "BACK":
+            return 1, None, None, None, None, None
+        
+        if "PROMOTION" in untranslated_piece_move:
+            promotion = ['Q', 'R', 'N', 'B'] if player == "black" else ['q', 'r', 'n', 'b']
+            print(promotion)
+            promotion_in = get_in(promotion)
+            BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]] = f" {promotion_in} "
+        
+        translated_piece_move = translate(untranslated_piece_move)
+    else:
+        print(player_pieces[player])
+
+        untranslated_piece_to_move = get_in(player_pieces[player])
+        if untranslated_piece_to_move.upper() == "BACK":
+            return 1, None, None, None, None, None
+
+        translated_piece_to_move = translate(untranslated_piece_to_move)
+
+        all_legal_moves = []
+        for piece in player_pieces[player].keys():
+            all_legal_moves.extend(move(player_pieces, player, piece, BOARD))
+
+        legal_moves = legal_check(move(player_pieces, player, untranslated_piece_to_move, BOARD), player, opposite_player_moves)
+        print(legal_moves)
+
+        untranslated_piece_move = get_in(legal_moves)
+        if untranslated_piece_move.upper() == "BACK":
+            return 1, None, None, None, None, None
+        
+        if "PROMOTION" in untranslated_piece_move:
+            promotion = ['Q', 'R', 'N', 'B'] if player == "black" else ['q', 'r', 'n', 'b']
+            print(promotion)
+            promotion_in = get_in(promotion)
+            BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]] = f" {promotion_in} "
+
+        translated_piece_move = translate(untranslated_piece_move)
     
-    if untrans_move == "QUEENSIDE CASTLE":
+    if untranslated_piece_move == "QUEENSIDE CASTLE":
         if player == "white":
             BOARD[7][2] = BOARD[7][4]  
             BOARD[7][4] = EMPTY
@@ -105,7 +91,11 @@ def game_loop(player, opposite_player):
             BOARD[0][4] = EMPTY
             BOARD[0][3] = BOARD[0][0]
             BOARD[0][0] = EMPTY
-    elif untrans_move == "KINGSIDE CASTLE":
+
+        FEN_str = FEN_str_gen(BOARD, player, all_legal_moves, opposite_player_moves)
+
+        return 0, FEN_str, BOARD[translated_piece_move[0]][translated_piece_move[1]], untranslated_piece_to_move, untranslated_piece_move, capture_flag
+    elif untranslated_piece_move == "KINGSIDE CASTLE":
         if player == "white":
             BOARD[7][6] = BOARD[7][4]
             BOARD[7][4] = EMPTY
@@ -116,18 +106,49 @@ def game_loop(player, opposite_player):
             BOARD[0][4] = EMPTY
             BOARD[0][5] = BOARD[0][7] 
             BOARD[0][7] = EMPTY
-    else:
-        if user_in in Castle_flags[player]:
-            Castle_flags[player][user_in] = False
 
-        move_in = translate(untrans_move)
-        BOARD[move_in[0]][move_in[1]] = BOARD[translated_in[0]][translated_in[1]]
-        BOARD[translated_in[0]][translated_in[1]] = EMPTY
+        FEN_str = FEN_str_gen(BOARD, player, all_legal_moves, opposite_player_moves)
+
+        return 0, FEN_str, BOARD[translated_piece_move[0]][translated_piece_move[1]], untranslated_piece_to_move, untranslated_piece_move, capture_flag
+    else:
+        if untranslated_piece_to_move in Castle_flags[player]:
+            Castle_flags[player][untranslated_piece_to_move] = False
+
+        if BOARD[translated_piece_move[0]][translated_piece_move[1]] != EMPTY:
+            capture_flag = True
+
+        BOARD[translated_piece_move[0]][translated_piece_move[1]] = BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]]
+        BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]] = EMPTY
+
+    FEN_str = FEN_str_gen(BOARD, player, all_legal_moves, opposite_player_moves)
+
+    return 0, FEN_str, BOARD[translated_piece_move[0]][translated_piece_move[1]], untranslated_piece_to_move, untranslated_piece_move, capture_flag
 
 initboard()
 
 while game:
-    game_loop(player, opposite_player)
+    status_code, mv_str, piece_type, piece_init_location, piece_final_location, capture_flag = game_loop(player, opposite_player)
     
-    player = "black" if player == "white" else "white"
-    opposite_player = "black" if player == "white" else "white"
+    if status_code == 0:
+        if half_move_clock_check(piece_type, capture_flag):
+            half_move_clock = 0
+        else:
+            half_move_clock += 1
+
+        if player == 'black':
+            full_move_clock += 1
+
+        if half_move_clock == 100:
+            game = False
+            print("Draw by 50 move rule")
+
+        if isinstance(mv_str, str):
+            new_str = f"{mv_str} {en_passant_check(piece_type, piece_init_location, piece_final_location, player)} {half_move_clock} {full_move_clock}"
+            print(new_str)
+
+        player = "black" if player == "white" else "white"
+        opposite_player = "black" if player == "white" else "white"
+
+    elif status_code == "CHECKMATE":
+        game = False
+        print(f"{opposite_player.upper()} wins!")

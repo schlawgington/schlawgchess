@@ -1,4 +1,5 @@
 from constants import *
+from helper import *
 
 def move(pieces:dict, color:str, user_in:str, BOARD):
     pos_moves = []
@@ -13,7 +14,12 @@ def move(pieces:dict, color:str, user_in:str, BOARD):
                     square = f"{Files[cur_file + df]}{cur_row + dr}"
 
                     if square in pieces["white" if color == "black" else "black"]:
-                        pos_moves.append(square)
+                        if color == "white" and square[1] == '8':
+                            pos_moves.append(f"{square} PROMOTION")
+                        elif color == "black" and square[1] == '1':
+                            pos_moves.append(f"{square} PROMOTION")
+                        else:
+                            pos_moves.append(square)
 
             match (cur_row, color):
                 case (2, "white"):
@@ -36,11 +42,23 @@ def move(pieces:dict, color:str, user_in:str, BOARD):
 
                         else:
                             pos_moves.append(square)
-                case _:
-                    offset = 1 if color == "white" else -1
+                case (2, "black"):
+                    offset = -1
                     square = f"{Files[cur_file]}{cur_row + offset}"
 
-                    if BOARD[BOARD_HEIGHT - cur_row + offset][cur_file] == ' . ':
+                    if BOARD[BOARD_HEIGHT - cur_row - offset][cur_file] == EMPTY:
+                        pos_moves.append(f"{square} PROMOTION")
+                case (7, "white"):
+                    offset = 1
+                    square = f"{Files[cur_file]}{cur_row + offset}"
+
+                    if BOARD[BOARD_HEIGHT - cur_row - offset][cur_file] == EMPTY:
+                        pos_moves.append(f"{square} PROMOTION") 
+                case _:
+                    offset = -1 if color == "white" else 1
+                    square = f"{Files[cur_file]}{cur_row - offset}"
+
+                    if BOARD[BOARD_HEIGHT - cur_row + offset][cur_file] == EMPTY:
                         pos_moves.append(square)
         case 'N':
             directions = [
@@ -174,10 +192,10 @@ def move(pieces:dict, color:str, user_in:str, BOARD):
                     else:
                         pos_moves.append(square)
 
-            cur_king = "E1" if color == "white" else "E8"
-            rook_pos = ["A1", "H1"] if color == "white" else ["A8", "H8"]
-            queenside = ["C1", "D1"] if color == "white" else ["C8", "D8"]
-            kingside = ["F1", "G1"] if color == "white" else ["F8", "G8"]
+            cur_king = "e1" if color == "white" else "e8"
+            rook_pos = ["a1", "h1"] if color == "white" else ["a8", "h8"]
+            queenside = ["c1", "d1"] if color == "white" else ["c8", "d8"]
+            kingside = ["f1", "g1"] if color == "white" else ["f8", "g8"]
 
             if Castle_flags[color][cur_king]:
                 if Castle_flags[color][rook_pos[0]] and all(sq not in pieces[color] for sq in queenside):
@@ -188,20 +206,52 @@ def move(pieces:dict, color:str, user_in:str, BOARD):
     return pos_moves
 
 def legal_check(moves:list, player, opposite_player_moves):
-    queenside = ["B1", "C1", "D1"] if player == "white" else ["B8", "C8", "D8"]
-    kingside = ["E1", "F1", "G1"] if player == "white" else ["E8", "F8", "G8"]
+    queenside = ["b1", "c1", "d1"] if player == "white" else ["b8", "c8", "d8"]
+    kingside = ["1", "f1", "g1"] if player == "white" else ["e8", "f8", "g8"]
 
     legal_moves = []
     for m in moves:
         if m == "QUEENSIDE CASTLE":
-            if all(sq not in opposite_player_moves for sq in queenside):
+            if not any(sq in opposite_player_moves for sq in queenside):
                 legal_moves.append(m)
         elif m == "KINGSIDE CASTLE":
-            if all(sq not in opposite_player_moves for sq in kingside):
+            if not any(sq in opposite_player_moves for sq in kingside):
                 legal_moves.append(m)
         else:
             legal_moves.append(m)
 
-    print(legal_moves)
-
     return legal_moves
+
+def moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD):
+    player_moves = {}
+    legal_pieces = {}
+
+    for piece in player_pieces[player].keys():
+        if piece not in player_moves:
+            player_moves[piece] = legal_check(move(player_pieces, player, piece, BOARD), player, opposite_player_moves)
+        
+        for mv in player_moves[piece]:
+            init_row, init_col = translate(piece)
+            final_row, final_col = translate(mv)
+
+            BOARD_COPY = copy.deepcopy(BOARD)
+
+            BOARD_COPY[final_row][final_col] = BOARD_COPY[init_row][init_col]
+            BOARD_COPY[init_row][init_col] = EMPTY
+
+            piece_dict = get_pieces(BOARD_COPY)
+
+            opp_player_move_check = []
+            for opp_piece in piece_dict[opposite_player].keys():
+                opp_player_move_check.extend(move(piece_dict, opposite_player, opp_piece, BOARD_COPY))
+           
+            if not in_check(opp_player_move_check, piece_dict, player):
+                if piece not in legal_pieces:
+                    legal_pieces[piece] = [mv]
+                else:
+                    legal_pieces[piece].append(mv)
+
+    if len(legal_pieces.keys()) == 0:
+        return "CHECKMATE"
+
+    return legal_pieces
