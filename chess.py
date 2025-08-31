@@ -3,7 +3,9 @@ from move import *
 from board_eval import *
 from helper import *
 
-def game_loop(player, opposite_player):
+en_passant_availability = en_passant
+
+def game_loop(player, opposite_player, en_passant_availability):
     capture_flag = False
 
     printboard(BOARD)
@@ -15,11 +17,11 @@ def game_loop(player, opposite_player):
 
     opposite_player_moves = []
     for piece in player_pieces[opposite_player].keys():
-        opposite_player_moves.extend(move(player_pieces, opposite_player, piece, BOARD))
+        opposite_player_moves.extend(move(player_pieces, opposite_player, piece, BOARD, en_passant_availability))
 
     if in_check(opposite_player_moves, player_pieces, player):
         print(f"{player} in check")
-        legal_moves = moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD)
+        legal_moves = moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD, en_passant_availability)
         all_legal_moves = legal_moves
 
         if legal_moves == "CHECKMATE":
@@ -63,9 +65,9 @@ def game_loop(player, opposite_player):
 
         all_legal_moves = []
         for piece in player_pieces[player].keys():
-            all_legal_moves.extend(move(player_pieces, player, piece, BOARD))
+            all_legal_moves.extend(move(player_pieces, player, piece, BOARD, en_passant_availability))
 
-        legal_moves = legal_check(move(player_pieces, player, untranslated_piece_to_move, BOARD), player, opposite_player_moves)
+        legal_moves = legal_check(move(player_pieces, player, untranslated_piece_to_move, BOARD, en_passant_availability), player, opposite_player_moves)
         print(legal_moves)
 
         untranslated_piece_move = get_in(legal_moves)
@@ -117,8 +119,22 @@ def game_loop(player, opposite_player):
         if BOARD[translated_piece_move[0]][translated_piece_move[1]] != EMPTY:
             capture_flag = True
 
-        BOARD[translated_piece_move[0]][translated_piece_move[1]] = BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]]
-        BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]] = EMPTY
+        if untranslated_piece_move == en_passant_availability and BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]].strip().lower() == 'p':
+            capture_flag = True
+            
+            if player == 'white':
+                BOARD[translated_piece_move[0]][translated_piece_move[1]] = BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]]
+                BOARD[translated_piece_move[0] + 1][translated_piece_move[1]] = EMPTY
+            
+            else:
+                BOARD[translated_piece_move[0]][translated_piece_move[1]] = BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]]
+                BOARD[translated_piece_move[0] - 1][translated_piece_move[1]] = EMPTY
+                
+            BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]] = EMPTY
+
+        else:
+            BOARD[translated_piece_move[0]][translated_piece_move[1]] = BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]]
+            BOARD[translated_piece_to_move[0]][translated_piece_to_move[1]] = EMPTY
 
     FEN_str = FEN_str_gen(BOARD, player, all_legal_moves, opposite_player_moves)
 
@@ -127,9 +143,11 @@ def game_loop(player, opposite_player):
 initboard()
 
 while game:
-    status_code, mv_str, piece_type, piece_init_location, piece_final_location, capture_flag = game_loop(player, opposite_player)
+    status_code, mv_str, piece_type, piece_init_location, piece_final_location, capture_flag = game_loop(player, opposite_player, en_passant_availability)
     
     if status_code == 0:
+        en_passant_availability = en_passant_check(piece_type, piece_init_location, piece_final_location, player)
+
         if half_move_clock_check(piece_type, capture_flag):
             half_move_clock = 0
         else:
@@ -143,7 +161,7 @@ while game:
             print("Draw by 50 move rule")
 
         if isinstance(mv_str, str):
-            new_str = f"{mv_str} {en_passant_check(piece_type, piece_init_location, piece_final_location, player)} {half_move_clock} {full_move_clock}"
+            new_str = f"{mv_str} {en_passant_availability} {half_move_clock} {full_move_clock}"
             print(new_str)
 
         player = "black" if player == "white" else "white"

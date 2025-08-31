@@ -51,6 +51,8 @@ Material_dict = {
     'P': 1
 }
 
+en_passant = '-'
+
 game = True
 player = "white"
 opposite_player = "black"

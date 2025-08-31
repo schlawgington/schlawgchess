@@ -1,7 +1,7 @@
 from constants import *
 from helper import *
 
-def move(pieces:dict, color:str, user_in:str, BOARD):
+def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
     pos_moves = []
     cur_row = int(user_in[1])
     cur_file = Filetonum[user_in[0]]
@@ -20,6 +20,17 @@ def move(pieces:dict, color:str, user_in:str, BOARD):
                             pos_moves.append(f"{square} PROMOTION")
                         else:
                             pos_moves.append(square)
+
+            if en_passant_availability != '-':
+                if color == 'white' and en_passant_availability[1] == '6':
+                    en_passant_file = Filetonum[en_passant_availability[0]]
+                    if cur_file == en_passant_file + 1 or cur_file == en_passant_file - 1:
+                        pos_moves.append(en_passant_availability)
+            
+                if color == 'black' and en_passant_availability[1] == '3':
+                    en_passant_file = Filetonum[en_passant_availability[0]]
+                    if cur_file == en_passant_file + 1 or cur_file == en_passant_file - 1:
+                        pos_moves.append(en_passant_availability)
 
             match (cur_row, color):
                 case (2, "white"):
@@ -207,7 +218,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD):
 
 def legal_check(moves:list, player, opposite_player_moves):
     queenside = ["b1", "c1", "d1"] if player == "white" else ["b8", "c8", "d8"]
-    kingside = ["1", "f1", "g1"] if player == "white" else ["e8", "f8", "g8"]
+    kingside = ["e1", "f1", "g1"] if player == "white" else ["e8", "f8", "g8"]
 
     legal_moves = []
     for m in moves:
@@ -222,13 +233,13 @@ def legal_check(moves:list, player, opposite_player_moves):
 
     return legal_moves
 
-def moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD):
+def moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD, en_passant_availability):
     player_moves = {}
     legal_pieces = {}
 
     for piece in player_pieces[player].keys():
         if piece not in player_moves:
-            player_moves[piece] = legal_check(move(player_pieces, player, piece, BOARD), player, opposite_player_moves)
+            player_moves[piece] = legal_check(move(player_pieces, player, piece, BOARD, en_passant_availability), player, opposite_player_moves)
         
         for mv in player_moves[piece]:
             init_row, init_col = translate(piece)
@@ -243,7 +254,7 @@ def moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pie
 
             opp_player_move_check = []
             for opp_piece in piece_dict[opposite_player].keys():
-                opp_player_move_check.extend(move(piece_dict, opposite_player, opp_piece, BOARD_COPY))
+                opp_player_move_check.extend(move(piece_dict, opposite_player, opp_piece, BOARD_COPY, en_passant_availability))
            
             if not in_check(opp_player_move_check, piece_dict, player):
                 if piece not in legal_pieces:
