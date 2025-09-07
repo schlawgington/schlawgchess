@@ -4,7 +4,7 @@ from board_eval import *
 from helper import *
 from pygui import *
 
-def piece_move(opposite_player_moves, player_pieces, player, en_passant, BOARD):
+def piece_move(opposite_player_moves, player_pieces, player, en_passant, BOARD, opposite_player):
     return_dict = {
         "init_pos_untranslated": None,
         "final_pos_untranslated": None,
@@ -16,7 +16,7 @@ def piece_move(opposite_player_moves, player_pieces, player, en_passant, BOARD):
         "checkmate_flag": False
     }
 
-    if in_check(opposite_player_moves, player_pieces, player):
+    if in_check(opposite_player_moves, player_pieces, player, opposite_player):
         print(f"{player} in check")
         all_legal_moves = moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD, en_passant)
 
@@ -25,15 +25,15 @@ def piece_move(opposite_player_moves, player_pieces, player, en_passant, BOARD):
             return return_dict
 
         legal_moves_pieces = {}
-        for piece in legal_moves.keys():
+        for piece in all_legal_moves.keys():
             if piece not in legal_moves_pieces:
                 row, col = translate(piece)
-                legal_move_pieces[piece] = BOARD[row][col].strip()
+                legal_moves_pieces[piece] = BOARD[row][col].strip()
 
-        untranslated_piece_to_move = get_in(legal_moves.keys())
+        untranslated_piece_to_move = get_in(all_legal_moves.keys())
         piece_init_pos = piece_init_row, piece_init_col = translate(untranslated_piece_to_move)
 
-        untranslated_piece_move = get_in(legal_moves[untranslated_piece_to_move])
+        untranslated_piece_move = get_in(all_legal_moves[untranslated_piece_to_move])
         piece_final_pos = piece_final_row, piece_final_col = translate(untranslated_piece_move)
 
     else:
@@ -137,7 +137,7 @@ def game_loop():
             for piece in player_pieces[opposite_player].keys():
                 opposite_player_moves.extend(move(player_pieces, opposite_player, piece, BOARD, en_passant))
 
-            piece_move_return_dict = piece_move(opposite_player_moves, player_pieces, player, en_passant, BOARD)
+            piece_move_return_dict = piece_move(opposite_player_moves, player_pieces, player, en_passant, BOARD, opposite_player)
 
             en_passant = en_passant_check(piece_move_return_dict["piece_type"], piece_move_return_dict["init_pos_untranslated"], piece_move_return_dict["final_pos_untranslated"], player)
 
