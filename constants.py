@@ -1,5 +1,6 @@
 import copy
 import math
+import random
 
 BOARD_WIDTH = 8
 BOARD_HEIGHT = 8
@@ -8,15 +9,9 @@ EMPTY = '   '
 
 BOARD = [[EMPTY for i in range(BOARD_WIDTH)] for i in range(BOARD_HEIGHT)]
 
-half_move_clock = 0
-full_move_clock = 1
-
 Files = ["a", "b", "c", "d", "e", "f", "g", "h"]
 back_rank = [' R ', ' N ', ' B ', ' Q ', ' K ', ' B ', ' N ', ' R ']
 test_back_rank = [' R ', EMPTY, EMPTY, ' Q ', ' K ', EMPTY, EMPTY, ' R ']
-
-white = "white"
-black = "black"
 
 Filetonum = {
         'a': 0,
@@ -50,12 +45,6 @@ Material_dict = {
     'B': 3,
     'P': 1
 }
-
-en_passant = '-'
-
-game = True
-player = "white"
-opposite_player = "black"
 
 ESCAPE_COLOR_HELL = "\033[0m"
 BLACK_BACK = "\033[48;5;232m"

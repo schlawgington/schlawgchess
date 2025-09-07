@@ -38,7 +38,7 @@ def get_pieces(BOARD_STATE):
                 if piece_pos_string not in pieces["white"]:
                     pieces["white"][piece_pos_string] = BOARD_STATE[row][col].strip()
 
-    return pieces
+    return pieces #returns dict pieces {'white': {white pieces}, 'black': {black pieces}}
 
 def in_check(opposite_player_moves:list, player_pieces, player):
     for piece in player_pieces[player].keys():
@@ -53,24 +53,33 @@ def in_check(opposite_player_moves:list, player_pieces, player):
 
     return check
 
-def get_in(pieces):
+class BackException(Exception):
+    pass
+
+#User input
+def get_in(pieces, player=None):
+    print(pieces)
     untranslated_piece_to_move = input("Enter rank and file: ")
 
     if untranslated_piece_to_move.upper() == "BACK":
-        return untranslated_piece_to_move
+        raise BackException()
 
-    while untranslated_piece_to_move not in pieces and untranslated_piece_to_move.upper() != "BACK":
+    while untranslated_piece_to_move not in pieces:
         untranslated_piece_to_move = input("Enter valid rank and file: ")
 
-    return untranslated_piece_to_move.lower()
+        if untranslated_piece_to_move.upper() == "BACK":
+            raise BackException()
 
+    return untranslated_piece_to_move
+
+#Translate user input to board position
 def translate(translated_piece_move:str):
     row_num = BOARD_HEIGHT - int(translated_piece_move[1])
     col_num = Filetonum[translated_piece_move[0]]
 
     return row_num, col_num
 
-def FEN_str_gen(BOARD, player, legal_moves, opposite_player_moves):
+def FEN_str_gen(BOARD, player, legal_moves, opposite_player_moves, en_passant, half_move_clock, full_move_clock):
     str_arr = []
     for row in range(BOARD_HEIGHT):
         count = 0
@@ -91,24 +100,26 @@ def FEN_str_gen(BOARD, player, legal_moves, opposite_player_moves):
     else:
         turn = 'w'
 
-    if player == 'white':
-        WK_castle_flag = 'K' if "KINGSIDE CASTLE" in legal_moves else ''
-        WQ_castle_flag = 'Q' if "QUEENSIDE CASTLE" in legal_moves else ''
+    all_moves = [move for moves in legal_moves.values() for move in moves]
 
-        BK_castle_flag = 'k' if "KINGSIDE CASTLE" in opposite_player_moves else ''
-        BQ_castle_flag = 'q' if "QUEENSIDE CASTLE" in opposite_player_moves else ''
+    if player == 'white':
+        WK_castle_flag = 'K' if "kingside castle" in all_moves else ''
+        WQ_castle_flag = 'Q' if "queenside castle" in all_moves else ''
+
+        BK_castle_flag = 'k' if "kingside castle" in opposite_player_moves else ''
+        BQ_castle_flag = 'q' if "queenside castle" in opposite_player_moves else ''
 
     if player == 'black':
-        WK_castle_flag = 'K' if "KINGSIDE CASTLE" in opposite_player_moves else ''
-        WQ_castle_flag = 'Q' if "QUEENSIDE CASTLE" in opposite_player_moves else ''
+        WK_castle_flag = 'K' if "kingside castle" in opposite_player_moves else ''
+        WQ_castle_flag = 'Q' if "queenside castle" in opposite_player_moves else ''
 
-        BK_castle_flag = 'k' if "KINGSIDE CASTLE" in legal_moves else ''
-        BQ_castle_flag = 'q' if "QUEENSIDE CASTLE" in legal_moves else ''
+        BK_castle_flag = 'k' if "kingside castle" in all_moves else ''
+        BQ_castle_flag = 'q' if "queenside castle" in all_moves else ''
 
     if WK_castle_flag == '' and WQ_castle_flag == '' and BK_castle_flag == '' and BQ_castle_flag == '':
         WK_castle_flag = '-'
 
-    FEN_str = f"{"".join(str_arr)} {turn} {WK_castle_flag}{WQ_castle_flag}{BK_castle_flag}{BQ_castle_flag}"
+    FEN_str = f"{"".join(str_arr)} {turn} {WK_castle_flag}{WQ_castle_flag}{BK_castle_flag}{BQ_castle_flag} {en_passant} {half_move_clock} {full_move_clock}"
 
     return FEN_str
 
@@ -132,3 +143,18 @@ def half_move_clock_check(piece_type, capture_flag):
         return True
     else:
         return False
+
+def FEN_str_to_BOARD(FEN_str):
+    split_FEN_str = FEN_str.split("/")
+    split_FEN_str_arr = []
+
+    for split in split_FEN_str:
+        row = []
+        for ch in split:
+            if ch.isdigit():
+                row.extend([EMPTY] * int(ch))
+            else:
+                row.append(f" {ch} ")
+        split_FEN_str_arr.append(row)
+
+    return split_FEN_str_arr

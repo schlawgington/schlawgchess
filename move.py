@@ -15,22 +15,11 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
 
                     if square in pieces["white" if color == "black" else "black"]:
                         if color == "white" and square[1] == '8':
-                            pos_moves.append(f"{square} PROMOTION")
+                            pos_moves.append(f"{square} promotion")
                         elif color == "black" and square[1] == '1':
-                            pos_moves.append(f"{square} PROMOTION")
+                            pos_moves.append(f"{square} promotion")
                         else:
                             pos_moves.append(square)
-
-            if en_passant_availability != '-':
-                if color == 'white' and en_passant_availability[1] == '6':
-                    en_passant_file = Filetonum[en_passant_availability[0]]
-                    if cur_file == en_passant_file + 1 or cur_file == en_passant_file - 1:
-                        pos_moves.append(en_passant_availability)
-            
-                if color == 'black' and en_passant_availability[1] == '3':
-                    en_passant_file = Filetonum[en_passant_availability[0]]
-                    if cur_file == en_passant_file + 1 or cur_file == en_passant_file - 1:
-                        pos_moves.append(en_passant_availability)
 
             match (cur_row, color):
                 case (2, "white"):
@@ -58,19 +47,31 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                     square = f"{Files[cur_file]}{cur_row + offset}"
 
                     if BOARD[BOARD_HEIGHT - cur_row - offset][cur_file] == EMPTY:
-                        pos_moves.append(f"{square} PROMOTION")
+                        pos_moves.append(f"{square} promotion")
                 case (7, "white"):
                     offset = 1
                     square = f"{Files[cur_file]}{cur_row + offset}"
 
                     if BOARD[BOARD_HEIGHT - cur_row - offset][cur_file] == EMPTY:
-                        pos_moves.append(f"{square} PROMOTION") 
+                        pos_moves.append(f"{square} promotion") 
                 case _:
                     offset = -1 if color == "white" else 1
                     square = f"{Files[cur_file]}{cur_row - offset}"
 
                     if BOARD[BOARD_HEIGHT - cur_row + offset][cur_file] == EMPTY:
                         pos_moves.append(square)
+
+            if en_passant_availability != '-':
+                if color == 'white' and en_passant_availability[1] == '6':
+                    en_passant_file = Filetonum[en_passant_availability[0]]
+                    if (cur_file == en_passant_file + 1 or cur_file == en_passant_file - 1) and cur_row == 5:
+                        pos_moves.append(f"{en_passant_availability} ep")
+            
+                if color == 'black' and en_passant_availability[1] == '3':
+                    en_passant_file = Filetonum[en_passant_availability[0]]
+                    if (cur_file == en_passant_file + 1 or cur_file == en_passant_file - 1) and cur_row == 4:
+                        pos_moves.append(f"{en_passant_availability} ep")
+
         case 'N':
             directions = [
                 (1, 2),
@@ -210,9 +211,9 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
 
             if Castle_flags[color][cur_king]:
                 if Castle_flags[color][rook_pos[0]] and all(sq not in pieces[color] for sq in queenside):
-                    pos_moves.append("QUEENSIDE CASTLE")
+                    pos_moves.append("queenside castle")
                 if Castle_flags[color][rook_pos[1]] and all(sq not in pieces[color] for sq in kingside):
-                    pos_moves.append("KINGSIDE CASTLE")
+                    pos_moves.append("kingside castle")
     
     return pos_moves
 
@@ -222,10 +223,10 @@ def legal_check(moves:list, player, opposite_player_moves):
 
     legal_moves = []
     for m in moves:
-        if m == "QUEENSIDE CASTLE":
+        if m == "queenside castle":
             if not any(sq in opposite_player_moves for sq in queenside):
                 legal_moves.append(m)
-        elif m == "KINGSIDE CASTLE":
+        elif m == "kingside castle":
             if not any(sq in opposite_player_moves for sq in kingside):
                 legal_moves.append(m)
         else:
