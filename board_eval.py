@@ -24,4 +24,4 @@ def score(FEN_str, player_pieces, all_legal_moves, opposite_player_moves, cur_pl
 
     return tot_eval
 
-#def minimax(turn, cur_depth, position_score, target_depth)
+#def minimax(cur_depth, white_turn, BOARD, target_depth):

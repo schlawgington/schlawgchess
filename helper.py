@@ -56,7 +56,7 @@ def in_check(opposite_player_moves:list, player_pieces, player):
     return check
 
 #User input
-def get_in(pieces, player=None):
+def get_in(pieces):
     print(pieces)
     while True:
         user_input = input("Enter rank and file: ")
