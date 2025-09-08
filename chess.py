@@ -16,7 +16,7 @@ def piece_move(opposite_player_moves, player_pieces, player, opposite_player, en
         "checkmate_flag": False
     }
 
-    if in_check(opposite_player_moves, player_pieces, player, opposite_player):
+    if in_check(opposite_player_moves, player_pieces, player):
         print(f"{player} in check")
         all_legal_moves = moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD, en_passant)
 
@@ -25,7 +25,6 @@ def piece_move(opposite_player_moves, player_pieces, player, opposite_player, en
             return return_dict
 
         legal_moves_pieces = {}
-        for piece in all_legal_moves.keys():
         for piece in all_legal_moves.keys():
             if piece not in legal_moves_pieces:
                 row, col = translate(piece)
