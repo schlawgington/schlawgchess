@@ -3,11 +3,13 @@ from helper import *
 
 def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
     pos_moves = []
+    #Translate user input to numbers for offset calculations
     cur_row = int(user_in[1])
     cur_file = Filetonum[user_in[0]]
 
     match pieces[color][user_in].upper():
         case 'P':
+            #Pawn capturing
             cap_directions = [(1, 1), (1, -1)] if color == "white" else [(-1, 1), (-1, -1)]
             for dr, df in cap_directions:
                 if 0 <= cur_file + df < BOARD_WIDTH and 1 <= cur_row + dr <= BOARD_HEIGHT:
@@ -21,6 +23,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                         else:
                             pos_moves.append(square)
 
+            #Pawn moving 2 squares from starting position
             match (cur_row, color):
                 case (2, "white"):
                     offset = [1, 2]
@@ -61,6 +64,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                     if BOARD[BOARD_HEIGHT - cur_row + offset][cur_file] == EMPTY:
                         pos_moves.append(square)
 
+            #En passant check
             if en_passant_availability != '-':
                 if color == 'white' and en_passant_availability[1] == '6':
                     en_passant_file = Filetonum[en_passant_availability[0]]
@@ -73,6 +77,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                         pos_moves.append(f"{en_passant_availability} ep")
 
         case 'N':
+            #Knight move generation
             directions = [
                 (1, 2),
                 (1, -2),
@@ -90,6 +95,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                     if square not in pieces[color]:
                         pos_moves.append(square)
         case 'B':
+            #Bishop move generation
             directions = [
                 (1, 1),
                 (-1, -1),
@@ -117,6 +123,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                     else:
                         pos_moves.append(square)
         case 'R':
+            #Rook move generation
             directions = [
                 (1, 0),
                 (-1, 0),
@@ -144,6 +151,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                     else:
                         pos_moves.append(square)
         case 'Q':
+            #Queen move generation
             directions = [
                 (1, 0),
                 (-1, 0),
@@ -175,6 +183,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                     else:
                         pos_moves.append(square)
         case 'K':
+            #King move generation
             directions = [
                 (1, 0),
                 (-1, 0),
@@ -204,6 +213,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                     else:
                         pos_moves.append(square)
 
+            #Check for castling possibility
             cur_king = "e1" if color == "white" else "e8"
             rook_pos = ["a1", "h1"] if color == "white" else ["a8", "h8"]
             queenside = ["c1", "d1"] if color == "white" else ["c8", "d8"]
@@ -217,6 +227,7 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
     
     return pos_moves
 
+#Checks if castling is legal in current position
 def legal_check(moves:list, player, opposite_player_moves):
     queenside = ["b1", "c1", "d1"] if player == "white" else ["b8", "c8", "d8"]
     kingside = ["e1", "f1", "g1"] if player == "white" else ["e8", "f8", "g8"]
@@ -234,6 +245,7 @@ def legal_check(moves:list, player, opposite_player_moves):
 
     return legal_moves
 
+#All moves to get out of check when check is detected
 def moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD, en_passant_availability):
     player_moves = {}
     legal_pieces = {}

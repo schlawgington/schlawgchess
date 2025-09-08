@@ -4,7 +4,9 @@ from board_eval import *
 from helper import *
 from pygui import *
 
+#Handles user input for getting piece to move starting square and ending square
 def piece_move(opposite_player_moves, player_pieces, player, opposite_player, en_passant, BOARD):
+    #Dictionary containing all values needed for return in the game loop
     return_dict = {
         "init_pos_untranslated": None,
         "final_pos_untranslated": None,
@@ -17,12 +19,13 @@ def piece_move(opposite_player_moves, player_pieces, player, opposite_player, en
     }
 
     if in_check(opposite_player_moves, player_pieces, player):
-        print(f"{player} in check")
         all_legal_moves = moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD, en_passant)
 
         if all_legal_moves == "CHECKMATE":
             return_dict["checkmate_flag"] = True
             return return_dict
+
+        print(f"{player} in check")
 
         legal_moves_pieces = {}
         for piece in all_legal_moves.keys():
@@ -77,6 +80,7 @@ def piece_move(opposite_player_moves, player_pieces, player, opposite_player, en
 
     return return_dict
 
+#Handles kingside and queenside castling, en passant, and normal moves
 def move_handling(BOARD, piece_init_pos, piece_final_pos, untranslated_piece_move, player):
     match untranslated_piece_move:
         case "queenside castle":
@@ -125,6 +129,7 @@ def game_loop():
     player = "white"
     opposite_player = "black"
 
+    #En passant flags and markers for FEN strings
     en_passant = '-'
     half_move_clock = 0
     full_move_clock = 1
@@ -143,6 +148,10 @@ def game_loop():
             opposite_player_moves.extend(move(player_pieces, opposite_player, piece, BOARD, en_passant))
 
         piece_move_return_dict = piece_move(opposite_player_moves, player_pieces, player, opposite_player, en_passant, BOARD)
+
+        if piece_move_return_dict["checkmate_flag"] == True:
+            print(f"{opposite_player} wins by checkmate")
+            break
 
         en_passant = en_passant_check(piece_move_return_dict["piece_type"], piece_move_return_dict["init_pos_untranslated"], piece_move_return_dict["final_pos_untranslated"], player)
 

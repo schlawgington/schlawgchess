@@ -1,5 +1,6 @@
 from constants import *
 
+#Board setup
 def initboard():
     for row in range(BOARD_HEIGHT):
         for col in range(BOARD_WIDTH):
@@ -40,6 +41,7 @@ def get_pieces(BOARD_STATE):
 
     return pieces #returns dict pieces {'white': {white pieces}, 'black': {black pieces}}
 
+#Check if king is in check
 def in_check(opposite_player_moves:list, player_pieces, player):
     for piece in player_pieces[player].keys():
         if player_pieces[player][piece].upper() == 'K':
@@ -83,13 +85,14 @@ def piece_init_pos_to_final_pos(all_legal_moves):
 
     return untranslated_piece_to_move, untranslated_piece_move
 
-#Translate user input to board position
+#Translate user inputs to board position (eg user input of a2 is equal to [6][0] on BOARD)
 def translate(translated_piece_move:str):
     row_num = BOARD_HEIGHT - int(translated_piece_move[1])
     col_num = Filetonum[translated_piece_move[0]]
 
     return row_num, col_num
 
+#Generate FEN string for portability to chess.com & lichess
 def FEN_str_gen(BOARD, player, legal_moves, opposite_player_moves, en_passant, half_move_clock, full_move_clock):
     str_arr = []
     for row in range(BOARD_HEIGHT):
@@ -134,6 +137,7 @@ def FEN_str_gen(BOARD, player, legal_moves, opposite_player_moves, en_passant, h
 
     return FEN_str
 
+#Check if en passant is available for FEN string generation and move generation
 def en_passant_check(piece_type, piece_init_location, piece_final_location, player):
     pawn_validity = False
     if piece_type.strip() == 'p' or piece_type.strip() == 'P':
@@ -149,12 +153,14 @@ def en_passant_check(piece_type, piece_init_location, piece_final_location, play
 
     return '-'
 
+#For FEN string
 def half_move_clock_check(piece_type, capture_flag):
     if piece_type.strip() == 'p' or piece_type.strip() == 'P' or capture_flag == True:
         return True
     else:
         return False
 
+#Turn FEN string back to BOARD
 def FEN_str_to_BOARD(FEN_str):
     split_FEN_str = FEN_str.split("/")
     split_FEN_str_arr = []
