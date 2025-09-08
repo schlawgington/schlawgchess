@@ -53,24 +53,35 @@ def in_check(opposite_player_moves:list, player_pieces, player):
 
     return check
 
-class BackException(Exception):
-    pass
-
 #User input
 def get_in(pieces, player=None):
     print(pieces)
-    untranslated_piece_to_move = input("Enter rank and file: ")
+    while True:
+        user_input = input("Enter rank and file: ")
 
-    if untranslated_piece_to_move.upper() == "BACK":
-        raise BackException()
+        if user_input.lower() == "back":
+            return "back"
+        elif user_input not in pieces:
+            continue
+        else:
+            return user_input
 
-    while untranslated_piece_to_move not in pieces:
-        untranslated_piece_to_move = input("Enter valid rank and file: ")
+#Handle input for piece starting square and piece final square
+def piece_init_pos_to_final_pos(all_legal_moves):
+    while True:
+        untranslated_piece_to_move = get_in(list(all_legal_moves.keys()))
 
-        if untranslated_piece_to_move.upper() == "BACK":
-            raise BackException()
+        if untranslated_piece_to_move == "back":
+            continue
 
-    return untranslated_piece_to_move
+        untranslated_piece_move = get_in(all_legal_moves[untranslated_piece_to_move])
+
+        if untranslated_piece_move == "back":
+            continue
+        else:
+            break
+
+    return untranslated_piece_to_move, untranslated_piece_move
 
 #Translate user input to board position
 def translate(translated_piece_move:str):
