@@ -280,6 +280,31 @@ def moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pie
 
     return legal_pieces
 
+def GUIGetLegalMoves(opposite_player_moves, player_pieces, player, opposite_player, en_passant, BOARD):
+    if in_check(opposite_player_moves, player_pieces, player):
+        all_legal_moves = moves_to_get_out_of_check(opposite_player_moves, opposite_player, player_pieces, player, BOARD, en_passant)
+
+        if all_legal_moves == "CHECKMATE":
+            return "CHECKMATE"
+    else:
+        all_legal_moves = {}
+        for piece in player_pieces[player].keys():
+            if piece not in all_legal_moves:
+                all_legal_moves[piece] = legal_check(move(player_pieces, player, piece, BOARD, en_passant), player, opposite_player_moves)
+
+    translated_legal_moves = {}
+
+    for piece in all_legal_moves.keys():
+        translated_piece = translate(piece)
+        if translated_piece not in translated_legal_moves:
+            translated_legal_moves[translated_piece] = [translate(piece_move) for piece_move in all_legal_moves[piece]]
+
+    return translated_legal_moves
+
+def GUIMove(PieceInitPos, PieceFinalPos):
+    BOARD[PieceFinalPos[0]][PieceFinalPos[1]] = BOARD[PieceInitPos[0]][PieceInitPos[1]]
+    BOARD[PieceInitPos[0]][PieceInitPos[1]] = EMPTY
+
 #Handles user input for getting piece to move starting square and ending square
 def piece_move(opposite_player_moves, player_pieces, player, opposite_player, en_passant, BOARD):
     #Dictionary containing all values needed for return in the game loop
@@ -321,7 +346,6 @@ def piece_move(opposite_player_moves, player_pieces, player, opposite_player, en
                 all_legal_moves[piece] = legal_check(move(player_pieces, player, piece, BOARD, en_passant), player, opposite_player_moves)
         
         untranslated_piece_to_move, untranslated_piece_move = piece_init_pos_to_final_pos(all_legal_moves)
-
         piece_init_pos = piece_init_row, piece_init_col = translate(untranslated_piece_to_move)
 
         match untranslated_piece_move:

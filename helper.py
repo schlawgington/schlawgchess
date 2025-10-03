@@ -1,17 +1,17 @@
 from constants import *
 
 #Board setup
-def initboard():
+def initboard(test_board):
     for row in range(BOARD_HEIGHT):
         for col in range(BOARD_WIDTH):
             if row == 0:
-                BOARD[row][col] = back_rank[col].lower()
+                test_board[row][col] = back_rank[col].lower()
             elif row == 7:
-                BOARD[row][col] = back_rank[col]
+                test_board[row][col] = back_rank[col]
             if row == 1:
-               BOARD[row][col] = ' p '
+               test_board[row][col] = ' p '
             elif row == 6:
-               BOARD[row][col] = ' P '
+               test_board[row][col] = ' P '
 
 def printboard(BOARD_STATE):
     for row in range(BOARD_HEIGHT):
@@ -123,7 +123,7 @@ def FEN_str_gen(BOARD, player, legal_moves, opposite_player_moves, en_passant, h
         BK_castle_flag = 'k' if "kingside castle" in opposite_player_moves else ''
         BQ_castle_flag = 'q' if "queenside castle" in opposite_player_moves else ''
 
-    if player == 'black':
+    elif player == 'black':
         WK_castle_flag = 'K' if "kingside castle" in opposite_player_moves else ''
         WQ_castle_flag = 'Q' if "queenside castle" in opposite_player_moves else ''
 
