@@ -69,12 +69,12 @@ def move(pieces:dict, color:str, user_in:str, BOARD, en_passant_availability):
                 if color == 'white' and en_passant_availability[1] == '6':
                     en_passant_file = Filetonum[en_passant_availability[0]]
                     if (cur_file == en_passant_file + 1 or cur_file == en_passant_file - 1) and cur_row == 5:
-                        pos_moves.append(f"{en_passant_availability} ep")
+                        pos_moves.append(en_passant_availability)
             
                 if color == 'black' and en_passant_availability[1] == '3':
                     en_passant_file = Filetonum[en_passant_availability[0]]
                     if (cur_file == en_passant_file + 1 or cur_file == en_passant_file - 1) and cur_row == 4:
-                        pos_moves.append(f"{en_passant_availability} ep")
+                        pos_moves.append(en_passant_availability)
 
         case 'N':
             #Knight move generation
@@ -304,6 +304,19 @@ def GUIGetLegalMoves(opposite_player_moves, player_pieces, player, opposite_play
 def GUIMove(PieceInitPos, PieceFinalPos):
     BOARD[PieceFinalPos[0]][PieceFinalPos[1]] = BOARD[PieceInitPos[0]][PieceInitPos[1]]
     BOARD[PieceInitPos[0]][PieceInitPos[1]] = EMPTY
+
+def GUIExtraStuffHandling(PieceInitPos:tuple, PieceFinalPos:tuple, BOARD):
+    return_dict = {
+        "Piece Type": None,
+        "Capture Flag": False
+    }
+
+    return_dict["Piece Type"] = BOARD[PieceInitPos[0]][PieceInitPos[1]].strip()
+
+    if BOARD[PieceFinalPos[0]][PieceFinalPos[1]] != EMPTY:
+        return_dict["Capture Flag"] = True
+
+    return return_dict
 
 #Handles user input for getting piece to move starting square and ending square
 def piece_move(opposite_player_moves, player_pieces, player, opposite_player, en_passant, BOARD):

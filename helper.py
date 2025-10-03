@@ -140,16 +140,14 @@ def FEN_str_gen(BOARD, player, legal_moves, opposite_player_moves, en_passant, h
 #Check if en passant is available for FEN string generation and move generation
 def en_passant_check(piece_type, piece_init_location, piece_final_location, player):
     pawn_validity = False
-    if piece_type.strip() == 'p' or piece_type.strip() == 'P':
+    if piece_type == 'p' or piece_type == 'P':
         pawn_validity = True
 
     if pawn_validity:
-        if player == 'white':
-            if piece_final_location[0] == piece_init_location[0] and piece_final_location[1] == '4' and piece_init_location[1] == '2':
-                return f"{piece_final_location[0]}3"
-        else:
-            if piece_final_location[0] == piece_init_location[0] and piece_final_location[1] == '5' and piece_init_location[1] == '7':
-                return f"{piece_final_location[0]}6"
+        if player == 'white' and piece_final_location[1] == piece_init_location[1] and piece_final_location[0] == 4 and piece_init_location[0] == 2:
+            return f"{piece_final_location[1]}3"
+        elif piece_final_location[1] == piece_init_location[1] and piece_final_location[0] == 5 and piece_init_location[0] == 7:
+            return f"{piece_final_location[1]}6"
 
     return '-'
 

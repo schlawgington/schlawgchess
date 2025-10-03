@@ -39,8 +39,6 @@ def pygameBoardLoop(BOARD_STATE, inQueue):
 
                 inQueue.put((row, col))
 
-                print(f"Mouse clicked {row} {col}")
-
         screen.blit(background, (0, 0))
 
         for i in range(constants.BOARD_HEIGHT):
@@ -52,6 +50,6 @@ def pygameBoardLoop(BOARD_STATE, inQueue):
                 screen.blit(piece, rect)
 
         pygame.display.flip()
-        clock.tick(30)
+        clock.tick(60)
 
     pygame.quit()
