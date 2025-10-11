@@ -1,21 +1,24 @@
 from constants import *
-from move import *
 from helper import *
+from guiMOVE import *
 import threading
 import gui
 import queue
 
 InputQueue = queue.Queue()
+MoveListQueue = queue.Queue()
 
 initboard(BOARD)
 
 def game_loop():
 
-    global player
-    global opposite_player
+    global Player
+    global OppositePlayer
+    global game
+    global MoveList
 
-    player = "white"
-    opposite_player = "black"
+    Player = "White"
+    OppositePlayer = "Black"
 
     en_passant = '-'
     half_move_clock = 0
@@ -23,54 +26,57 @@ def game_loop():
     game = True
 
     while game:
-        print(en_passant)
-        player_pieces = get_pieces(BOARD)
+        MoveList = []
+        Allpieces = GUIGetPieces(BOARD)
 
-        opposite_player_moves = []
-        for piece in player_pieces[opposite_player].keys():
-            opposite_player_moves.extend(move(player_pieces, opposite_player, piece, BOARD, en_passant))
+        #Unprocessed moves (eg can be legal or illegal)
+        UnfilteredPlayerMoves = GetAllMoves(Allpieces, Player, BOARD, en_passant)
+        OppositePlayerMoves = GetAllMoves(Allpieces, OppositePlayer, BOARD, en_passant)
 
-        all_legal_moves = GUIGetLegalMoves(opposite_player_moves, player_pieces, player, opposite_player, en_passant, BOARD)
-        if all_legal_moves == "CHECKMATE":
-            game = False
+        PlayerMoveBitBoard = CreatePieceMoveBitBoard(UnfilteredPlayerMoves, BOARD, Player)
+        EnemyAttackBitBoard = CreatePieceMoveBitBoard(OppositePlayerMoves, BOARD, OppositePlayer)
 
-        PieceInitPos = InitRow, InitCol = InputQueue.get()
-        PieceFinalPos = FinalRow, FinalCol = InputQueue.get()
+        CheckDict = InCheck(EnemyAttackBitBoard, BOARD, Player)
+        KingPos = CheckDict["King Position"]
+        CheckBool = CheckDict["Check"]
 
-        if PieceInitPos not in all_legal_moves.keys() or PieceFinalPos not in all_legal_moves[PieceInitPos]:
+        PinnedPieces = GetPinnedPieces(KingPos, BOARD, Player, OppositePlayer , Allpieces, UnfilteredPlayerMoves, en_passant, EnemyAttackBitBoard)
+
+        PieceInitPos = InputQueue.get()
+        if PieceInitPos == ContinueValue:
             continue
+        
+        TranslatedEnPassant = (8 - int(en_passant[1]), Filetonum[en_passant[0]]) if en_passant != '-' else None
+
+        if CheckBool:
+            legal_moves = InCheckMoveGeneration(PinnedPieces, Player, OppositePlayer, KingPos, BOARD, en_passant, EnemyAttackBitBoard)
+            move_dict = legal_moves
         else:
-            Capture_Pawn_Flag = GUIExtraStuffHandling(PieceInitPos, PieceFinalPos, BOARD)
+            move_dict = PinnedPieces
 
-            en_passant = en_passant_check(
-                Capture_Pawn_Flag["Piece Type"],
-                PieceInitPos,
-                PieceFinalPos,
-                player)
+        if PieceInitPos not in move_dict:
+            continue
 
-            if half_move_clock_check(Capture_Pawn_Flag["Piece Type"], Capture_Pawn_Flag["Capture Flag"]):
-                half_move_clock = 0
-            else:
-                half_move_clock += 1
+        valid_moves = move_dict[PieceInitPos]
+        MoveListQueue.put(valid_moves)
 
-            if half_move_clock == 100:
-                game = False
+        while True:
+            PieceFinalPos = InputQueue.get()
+            if PieceFinalPos == ContinueValue:
+                break
+            if PieceFinalPos in valid_moves:
+                break
+        
+        if PieceFinalPos == ContinueValue:
+            continue
 
-            GUIMove(PieceInitPos, PieceFinalPos)
+        GUIMakeMove(PieceInitPos, PieceFinalPos, TranslatedEnPassant)
 
-        if player == "black":
-            full_move_clock += 1
-
-        FEN_str = FEN_str_gen(BOARD,
-            player,
-            all_legal_moves,
-            opposite_player_moves,
-            en_passant,
-            half_move_clock,
-            full_move_clock)
-
-        player, opposite_player = opposite_player, player
+        AuxiliaryDict = GUIExtraStuffHandling(PieceInitPos, PieceFinalPos, BOARD)
+        en_passant = en_passant_check(AuxiliaryDict["Piece Type"], PieceInitPos, PieceFinalPos, Player)
+        
+        Player, OppositePlayer = OppositePlayer, Player
 
 threading.Thread(target=game_loop, daemon=True).start()
 
-gui.pygameBoardLoop(BOARD, InputQueue)
+gui.pygameBoardLoop(BOARD, InputQueue, game, MoveListQueue)

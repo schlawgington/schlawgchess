@@ -1,6 +1,7 @@
 import pygame
 import constants
 import helper
+from queue import Empty
 
 WIDTH = 1024
 HEIGHT = 1024
@@ -24,20 +25,42 @@ img_dict = {
     "R": pygame.transform.scale(pygame.image.load("imgs/wr.png"), (WIDTH//8, HEIGHT//8))
 }
 
-def pygameBoardLoop(BOARD_STATE, inQueue):
+def highlight_squares(screen, moves, color=(0, 255, 0), alpha=100):
+    highlight_surface = pygame.Surface((128, 128), pygame.SRCALPHA)
+    highlight_surface.fill((*color, alpha))
+
+    for (row, col) in moves:
+        x = col * 128
+        y = row * 128
+        screen.blit(highlight_surface, (x, y))
+
+def pygameBoardLoop(BOARD_STATE, inQueue, game, MoveListQueue):
     clock = pygame.time.Clock()
     running = True
 
+    current_highlight = None
+
     while running:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT or game == False:
                 running = False
+                pygame.quit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                row = mouse_y//128
-                col = mouse_x//128
+                if event.button == 1:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    row = mouse_y//128
+                    col = mouse_x//128
 
-                inQueue.put((row, col))
+                    inQueue.put((row, col))
+                elif event.button == 3:
+                    inQueue.put((-1, -1))
+                    current_highlight = None
+
+        try:
+            MoveList = MoveListQueue.get_nowait()
+            current_highlight = MoveList
+        except Empty:
+            MoveList = None
 
         screen.blit(background, (0, 0))
 
@@ -48,6 +71,9 @@ def pygameBoardLoop(BOARD_STATE, inQueue):
                 piece = img_dict[BOARD_STATE[i][j].strip()]
                 rect = piece.get_rect(center=(128*j + 64, 128*i + 64))
                 screen.blit(piece, rect)
+        
+        if current_highlight:
+            highlight_squares(screen, current_highlight)
 
         pygame.display.flip()
         clock.tick(60)

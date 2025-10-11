@@ -24,16 +24,17 @@ Filetonum = {
         'h': 7
     }
 
-Castle_flags = {
-    "white": {
-        "a1": True,
-        "e1": True,
-        "h1": True
+GUICastleFlags = {
+    "White": {
+        (7, 0): True,
+        (7, 4): True,
+        (7, 7): True
     },
-    "black": {
-        "a8": True,
-        "e8": True,
-        "h8": True
+
+    "Black": {
+        (0, 0): True,
+        (0, 4): True,
+        (0, 7):True
     }
 }
 
@@ -45,6 +46,8 @@ Material_dict = {
     'B': 3,
     'P': 1
 }
+
+ContinueValue = (-1, -1)
 
 ESCAPE_COLOR_HELL = "\033[0m"
 BLACK_BACK = "\033[48;5;232m"
